@@ -3,6 +3,7 @@ package aldrin.sdn;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -47,20 +48,25 @@ class PetRepositoryTCTest {
 		Dog dog = new Dog();
 		dog.setName("Buddy");
 		dog.setChewToys(List.of(new ChewToy("bone")));
-		petRepository.save(dog);
+		var savedDog = petRepository.save(dog);
 
 		Cat cat = new Cat();
 		cat.setName("Whiskers");
 		cat.setSleepSpots(List.of(new SleepSpot("green window")));
 		petRepository.save(cat);
 
-		List<Pet> allPets = petRepository.findAllPets();
+//		List<Pet> allPets = petRepository.findAllPets(); //custom query. doesn't hydrate the relationships on Cat and Dog
+		List<Pet> allPets = petRepository.findAll();
 
 		List<Dog> dogs = allPets.stream().filter(Dog.class::isInstance).map(a -> (Dog)a).toList();
 		List<Cat> cats = allPets.stream().filter(Cat.class::isInstance).map(a -> (Cat)a).toList();
 
 		assertThat(dogs).flatExtracting("chewToys").isNotEmpty();
 		assertThat(cats).flatExtracting("sleepSpots").isNotEmpty();
+
+		Optional<Pet> retrievedDog = petRepository.findById(savedDog.getId());
+		assertThat(retrievedDog).isNotEmpty();
+		assertThat(retrievedDog.map(Dog.class::cast).get().getChewToys()).isNotEmpty();
 
 	}
 }
